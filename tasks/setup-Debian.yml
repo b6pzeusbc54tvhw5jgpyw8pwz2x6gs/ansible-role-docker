@@ -1,4 +1,10 @@
 ---
+- include_vars: proxy_vars.yml
+  when: EXTRA_VAR_PROXY_SERVER_URL is defined
+
+- include_vars: not_proxy_vars.yml
+  when: EXTRA_VAR_PROXY_SERVER_URL is not defined
+
 - name: Ensure old versions of Docker are not installed.
   package:
     name: '{{ item }}'
@@ -20,6 +26,7 @@
     id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
     state: present
   register: add_repository_key
+  environment: "{{proxy_env}}"
   ignore_errors: "{{ docker_apt_ignore_key_error }}"
 
 - name: Ensure curl is present (on older systems without SNI).
@@ -31,9 +38,11 @@
   args:
     warn: false
   when: add_repository_key is failed
+  environment: "{{proxy_env}}"
 
 - name: Add Docker repository.
   apt_repository:
     repo: "{{ docker_apt_repository }}"
     state: present
     update_cache: true
+  environment: "{{proxy_env}}"
